@@ -34,7 +34,23 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       // In a real app, you would handle authentication here
       console.log('Logging in with:', { email, role });
-      router.push('/dashboard'); // Mock redirect
+
+      // Role-based redirect
+      switch (role) {
+        case 'admin':
+          router.push('/admin');
+          break;
+        case 'professor':
+          router.push('/professor');
+          break;
+        case 'department_head':
+          router.push('/department');
+          break;
+        case 'student':
+        default:
+          router.push('/student');
+          break;
+      }
     } catch (err) {
       setError('An error occurred. Please try again.');
     } finally {
@@ -184,12 +200,12 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
-        
+
         {/* Footer */}
         <div className="bg-slate-50 px-8 py-4 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-500">
-                &copy; {new Date().getFullYear()} University of Excellence. All rights reserved.
-            </p>
+          <p className="text-xs text-slate-500">
+            &copy; {new Date().getFullYear()} University of Excellence. All rights reserved.
+          </p>
         </div>
       </div>
     </div>
