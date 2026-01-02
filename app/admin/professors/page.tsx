@@ -1,19 +1,163 @@
 'use client';
 
-// Mock data
-const professors = [
-    { id: 1, name: 'Dr. Sarah Smith', email: 'sarah.smith@univ.edu', department: 'Computer Science', specialty: 'AI & Data Science' },
-    { id: 2, name: 'Dr. James Chen', email: 'james.chen@univ.edu', department: 'Electrical Engineering', specialty: 'Control Systems' },
-    { id: 3, name: 'Dr. Michael Ross', email: 'michael.ross@univ.edu', department: 'Mechanical Engineering', specialty: 'Thermodynamics' },
-    { id: 4, name: 'Dr. Emily White', email: 'emily.white@univ.edu', department: 'Civil Engineering', specialty: 'Structural Engineering' },
-];
+import { useState, useEffect } from 'react';
+import Modal from '../../../components/Modal';
+
+interface Department {
+    id: number;
+    nom: string;
+}
+
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface Professor {
+    id: number;
+    nom: string;
+    dept_id: number;
+    specialite: string;
+    user_id: number;
+    created_at?: string;
+    updated_at?: string;
+}
 
 export default function ProfessorsPage() {
+    const [professors, setProfessors] = useState<Professor[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // Modal states
+    const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+    // Selection & Form Data
+    const [selectedProf, setSelectedProf] = useState<Professor | null>(null);
+    const [formData, setFormData] = useState({ nom: '', dept_id: '', specialite: '', user_id: '' });
+
+    // Fetch Data
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [profRes, deptRes, userRes] = await Promise.all([
+                fetch('http://planning_exam.test/api/professeurs'),
+                fetch('http://planning_exam.test/api/departements'),
+                fetch('http://planning_exam.test/api/users')
+            ]);
+
+            if (!profRes.ok || !deptRes.ok || !userRes.ok) throw new Error('Failed to fetch data');
+
+            const profData = await profRes.json();
+            const deptData = await deptRes.json();
+            const userData = await userRes.json();
+
+            setProfessors(Array.isArray(profData) ? profData : profData.data || []);
+            setDepartments(Array.isArray(deptData) ? deptData : deptData.data || []);
+            setUsers(Array.isArray(userData) ? userData : userData.data || []);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    // Helpers
+    const getDeptName = (id: number) => departments.find(d => d.id === id)?.nom || 'Unknown Dept';
+    const getUserEmail = (id: number) => users.find(u => u.id === id)?.email || 'No Email';
+
+    // Handlers
+    const handleAdd = async () => {
+        try {
+            const res = await fetch('http://planning_exam.test/api/professeurs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    dept_id: parseInt(formData.dept_id),
+                    user_id: parseInt(formData.user_id)
+                }),
+            });
+            if (!res.ok) throw new Error('Failed to add');
+            await fetchData();
+            setIsAddOpen(false);
+            setFormData({ nom: '', dept_id: '', specialite: '', user_id: '' });
+        } catch (err) {
+            console.error(err);
+            alert('Error adding professor');
+        }
+    };
+
+    const handleEdit = async () => {
+        if (!selectedProf) return;
+        try {
+            const res = await fetch(`http://planning_exam.test/api/professeurs/${selectedProf.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...formData,
+                    dept_id: parseInt(formData.dept_id),
+                    user_id: parseInt(formData.user_id)
+                }),
+            });
+            if (!res.ok) throw new Error('Failed to update');
+            await fetchData();
+            setIsEditOpen(false);
+            setSelectedProf(null);
+            setFormData({ nom: '', dept_id: '', specialite: '', user_id: '' });
+        } catch (err) {
+            console.error(err);
+            alert('Error updating professor');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!selectedProf) return;
+        try {
+            const res = await fetch(`http://planning_exam.test/api/professeurs/${selectedProf.id}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) throw new Error('Failed to delete');
+            await fetchData();
+            setIsDeleteOpen(false);
+            setSelectedProf(null);
+        } catch (err) {
+            console.error(err);
+            alert('Error deleting professor');
+        }
+    };
+
+    const openEdit = (prof: Professor) => {
+        setSelectedProf(prof);
+        setFormData({
+            nom: prof.nom,
+            dept_id: prof.dept_id.toString(),
+            specialite: prof.specialite,
+            user_id: prof.user_id.toString()
+        });
+        setIsEditOpen(true);
+    };
+
+    const openDelete = (prof: Professor) => {
+        setSelectedProf(prof);
+        setIsDeleteOpen(true);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Professors</h1>
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button
+                    onClick={() => setIsAddOpen(true)}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center"
+                >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Professor
                 </button>
@@ -25,33 +169,157 @@ export default function ProfessorsPage() {
                         <thead>
                             <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                                 <th className="px-6 py-4 font-semibold">Name</th>
-                                <th className="px-6 py-4 font-semibold">Email</th>
+                                <th className="px-6 py-4 font-semibold">Email (Linked User)</th>
                                 <th className="px-6 py-4 font-semibold">Department</th>
                                 <th className="px-6 py-4 font-semibold">Specialty</th>
                                 <th className="px-6 py-4 font-semibold text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {professors.map((prof) => (
-                                <tr key={prof.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">
-                                            {prof.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
-                                        </div>
-                                        <span className="text-slate-800 font-medium">{prof.name}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">{prof.email}</td>
-                                    <td className="px-6 py-4 text-slate-600">{prof.department}</td>
-                                    <td className="px-6 py-4 text-slate-600">{prof.specialty}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">View Profile</button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <tr><td colSpan={5} className="px-6 py-4 text-center">Loading...</td></tr>
+                            ) : professors.length === 0 ? (
+                                <tr><td colSpan={5} className="px-6 py-4 text-center text-slate-500">No professors found</td></tr>
+                            ) : (
+                                professors.map((prof) => (
+                                    <tr key={prof.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 flex items-center">
+                                            <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">
+                                                {prof.nom.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <span className="text-slate-800 font-medium">{prof.nom}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">{getUserEmail(prof.user_id)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{getDeptName(prof.dept_id)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{prof.specialite}</td>
+                                        <td className="px-6 py-4 text-right space-x-2">
+                                            <button onClick={() => openEdit(prof)} className="text-slate-400 hover:text-blue-600 transition-colors">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                            </button>
+                                            <button onClick={() => openDelete(prof)} className="text-slate-400 hover:text-red-600 transition-colors">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            {/* Add Modal */}
+            <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add Professor">
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.nom}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, nom: e.target.value })}
+                            placeholder="e.g. Dr. John Doe"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.specialite}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, specialite: e.target.value })}
+                            placeholder="e.g. AI"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.dept_id}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, dept_id: e.target.value })}
+                        >
+                            <option value="">Select Department</option>
+                            {departments.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Linked User Account</label>
+                        <select
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.user_id}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, user_id: e.target.value })}
+                        >
+                            <option value="">Select User</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button onClick={() => setIsAddOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add Professor</button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Professor">
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.nom}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, nom: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                        <input
+                            type="text"
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.specialite}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, specialite: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                        <select
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.dept_id}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, dept_id: e.target.value })}
+                        >
+                            <option value="">Select Department</option>
+                            {departments.map(d => <option key={d.id} value={d.id}>{d.nom}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Linked User Account</label>
+                        <select
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={formData.user_id}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, user_id: e.target.value })}
+                        >
+                            <option value="">Select User</option>
+                            {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button onClick={handleEdit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Delete Modal */}
+            <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Delete Professor">
+                <div className="space-y-4">
+                    <p className="text-gray-600">Are you sure you want to delete <span className="font-semibold">{selectedProf?.nom}</span>?</p>
+                    <div className="flex justify-end space-x-3 mt-6">
+                        <button onClick={() => setIsDeleteOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                        <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
