@@ -1,284 +1,130 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Modal from '../../../components/Modal';
+import { useEffect, useState } from 'react';
+import api from '../../../lib/axios';
+import EditRoomModal from '../../../components/EditRoomModal';
 
 interface Room {
     id: number;
     nom: string;
     capacite: number;
     type: string;
-    batiment: string;
-    created_at?: string;
-    updated_at?: string;
+    batiment?: string;
 }
 
 export default function RoomsPage() {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Modal states
-    const [isAddOpen, setIsAddOpen] = useState(false);
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-
-    // Selection & Form Data
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-    const [formData, setFormData] = useState({ nom: '', capacite: '', type: '', batiment: '' });
 
-    // Fetch Data
-    const fetchData = async () => {
+    const fetchRooms = async () => {
         try {
-            setLoading(true);
-            const res = await fetch('http://planning_exam.test/api/lieu_examen');
-            if (!res.ok) throw new Error('Failed to fetch rooms');
-            const data = await res.json();
-            setRooms(Array.isArray(data) ? data : data.data || []);
-        } catch (err) {
-            console.error(err);
+            const res = await api.get('/lieu_examen');
+            setRooms(res.data);
+        } catch (error) {
+            console.error("Failed to fetch rooms", error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        fetchRooms();
     }, []);
 
-    // Handlers
+    const handleDelete = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this room?')) return;
+        try {
+            await api.delete(`/lieu_examen/${id}`);
+            setRooms(rooms.filter(r => r.id !== id));
+        } catch (error) {
+            console.error("Failed to delete room", error);
+            alert("Failed to delete room. It might be linked to exams.");
+        }
+    };
+
     const handleAdd = async () => {
+        const name = prompt("Enter room name (e.g., Salle 101):");
+        if (!name) return;
+        const capacity = prompt("Enter capacity (e.g., 50):");
+        if (!capacity) return;
+        const type = prompt("Enter type (Amphitheater, Classroom, Laboratory):", "Classroom");
+        if (!type) return;
+
         try {
-            const res = await fetch('http://planning_exam.test/api/lieu_examen', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    capacite: parseInt(formData.capacite)
-                }),
+            const res = await api.post('/lieu_examen', {
+                nom: name,
+                capacite: parseInt(capacity),
+                type: type,
+                batiment: 'Main Block' // Default for now
             });
-            if (!res.ok) throw new Error('Failed to add');
-            await fetchData();
-            setIsAddOpen(false);
-            setFormData({ nom: '', capacite: '', type: '', batiment: '' });
-        } catch (err) {
-            console.error(err);
-            alert('Error adding room');
+            setRooms([...rooms, res.data]);
+        } catch (error) {
+            console.error("Failed to add room", error);
+            alert("Failed to add room");
         }
     };
 
-    const handleEdit = async () => {
-        if (!selectedRoom) return;
-        try {
-            const res = await fetch(`http://planning_exam.test/api/lieu_examen/${selectedRoom.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...formData,
-                    capacite: parseInt(formData.capacite)
-                }),
-            });
-            if (!res.ok) throw new Error('Failed to update');
-            await fetchData();
-            setIsEditOpen(false);
-            setSelectedRoom(null);
-            setFormData({ nom: '', capacite: '', type: '', batiment: '' });
-        } catch (err) {
-            console.error(err);
-            alert('Error updating room');
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!selectedRoom) return;
-        try {
-            const res = await fetch(`http://planning_exam.test/api/lieu_examen/${selectedRoom.id}`, {
-                method: 'DELETE',
-            });
-            if (!res.ok) throw new Error('Failed to delete');
-            await fetchData();
-            setIsDeleteOpen(false);
-            setSelectedRoom(null);
-        } catch (err) {
-            console.error(err);
-            alert('Error deleting room');
-        }
-    };
-
-    const openEdit = (room: Room) => {
+    const handleEdit = (room: Room) => {
         setSelectedRoom(room);
-        setFormData({
-            nom: room.nom,
-            capacite: room.capacite.toString(),
-            type: room.type,
-            batiment: room.batiment
-        });
-        setIsEditOpen(true);
+        setIsEditModalOpen(true);
     };
 
-    const openDelete = (room: Room) => {
-        setSelectedRoom(room);
-        setIsDeleteOpen(true);
+    const handleUpdateRoom = async (id: number, data: { nom: string; capacite: number; type: string; batiment: string }) => {
+        await api.put(`/lieu_examen/${id}`, data);
+        await fetchRooms(); // Refresh the list
     };
+
+    if (loading) return <div className="p-6 text-slate-500">Loading...</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Rooms</h1>
-                <button
-                    onClick={() => setIsAddOpen(true)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center"
-                >
+                <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Room
                 </button>
             </div>
 
-            {loading ? (
-                <div className="text-center py-10">Loading...</div>
-            ) : rooms.length === 0 ? (
-                <div className="text-center py-10 text-slate-500">No rooms found</div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {rooms.map((room) => (
-                        <div key={room.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col hover:border-blue-200 transition-colors">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-lg ${room.type === 'Amphitheater' ? 'bg-orange-50 text-orange-600' :
-                                        room.type === 'Laboratory' ? 'bg-purple-50 text-purple-600' :
-                                            'bg-blue-50 text-blue-600'
-                                    }`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rooms.map((room) => (
+                    <div key={room.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col hover:border-blue-200 transition-colors">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className={`p-3 rounded-lg ${room.type?.toLowerCase().includes('amphi') ? 'bg-orange-50 text-orange-600' :
+                                room.type?.toLowerCase().includes('lab') ? 'bg-purple-50 text-purple-600' :
+                                    'bg-blue-50 text-blue-600'
+                                }`}>
+                                {room.type?.toLowerCase().includes('amphi') ? (
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Capacity</p>
-                                    <p className="text-lg font-bold text-slate-800">{room.capacite}</p>
-                                </div>
+                                ) : (
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                )}
                             </div>
-
-                            <h3 className="text-lg font-bold text-slate-800">{room.nom}</h3>
-                            <p className="text-sm text-slate-500 mb-1">{room.type}</p>
-                            <p className="text-sm text-slate-400 mb-4">{room.batiment}</p>
-
-                            <div className="mt-auto flex space-x-2 pt-4 border-t border-slate-50">
-                                <button onClick={() => openEdit(room)} className="flex-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-sm font-medium rounded-lg transition-colors">Edit</button>
-                                <button onClick={() => openDelete(room)} className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium rounded-lg transition-colors">Delete</button>
+                            <div className="text-right">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-semibold">Capacity</p>
+                                <p className="text-lg font-bold text-slate-800">{room.capacite}</p>
                             </div>
                         </div>
-                    ))}
-                </div>
-            )}
 
-            {/* Add Modal */}
-            <Modal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} title="Add Room">
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.nom}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, nom: e.target.value })}
-                            placeholder="e.g. Amphi A"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                        <input
-                            type="number"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.capacite}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, capacite: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                        <select
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.type}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, type: e.target.value })}
-                        >
-                            <option value="">Select Type</option>
-                            <option value="Amphitheater">Amphitheater</option>
-                            <option value="Classroom">Classroom</option>
-                            <option value="Laboratory">Laboratory</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.batiment}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, batiment: e.target.value })}
-                            placeholder="e.g. Building C"
-                        />
-                    </div>
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button onClick={() => setIsAddOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                        <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Add Room</button>
-                    </div>
-                </div>
-            </Modal>
+                        <h3 className="text-lg font-bold text-slate-800">{room.nom}</h3>
+                        <p className="text-sm text-slate-500 mb-4">{room.type}</p>
 
-            {/* Edit Modal */}
-            <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Edit Room">
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Room Name</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.nom}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, nom: e.target.value })}
-                        />
+                        <div className="mt-auto flex space-x-2 pt-4 border-t border-slate-50">
+                            <button onClick={() => handleEdit(room)} className="flex-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-sm font-medium rounded-lg transition-colors">Edit</button>
+                            <button onClick={() => handleDelete(room.id)} className="flex-1 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 text-sm font-medium rounded-lg transition-colors">Delete</button>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
-                        <input
-                            type="number"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.capacite}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, capacite: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                        <select
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.type}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, type: e.target.value })}
-                        >
-                            <option value="">Select Type</option>
-                            <option value="Amphitheater">Amphitheater</option>
-                            <option value="Classroom">Classroom</option>
-                            <option value="Laboratory">Laboratory</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                        <input
-                            type="text"
-                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            value={formData.batiment}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, batiment: e.target.value })}
-                        />
-                    </div>
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button onClick={() => setIsEditOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                        <button onClick={handleEdit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save Changes</button>
-                    </div>
-                </div>
-            </Modal>
+                ))}
+            </div>
 
-            {/* Delete Modal */}
-            <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Delete Room">
-                <div className="space-y-4">
-                    <p className="text-gray-600">Are you sure you want to delete <span className="font-semibold">{selectedRoom?.nom}</span>?</p>
-                    <div className="flex justify-end space-x-3 mt-6">
-                        <button onClick={() => setIsDeleteOpen(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                        <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
-                    </div>
-                </div>
-            </Modal>
+            <EditRoomModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSubmit={handleUpdateRoom}
+                room={selectedRoom}
+            />
         </div>
     );
 }

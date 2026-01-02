@@ -1,19 +1,75 @@
 'use client';
 
-// Mock Data for Schema Compliance - Denormalized for Admin View (if we were to show a global list)
-// For now, we just keep simple stats, but we remove the relational arrays to be consistent with "no ID search"
+import { useEffect, useState } from 'react';
+import api from '../../lib/axios';
 
-const recentSchedules = [
-    { id: 1, dept: 'Computer Science', semester: 'Spring 2024', status: 'Published', date: 'Oct 24, 2024' },
-    { id: 2, dept: 'Electrical Engineering', semester: 'Spring 2024', status: 'Draft', date: 'Oct 23, 2024' },
-    { id: 3, dept: 'Civil Engineering', semester: 'Fall 2023', status: 'Archived', date: 'Jun 15, 2023' },
-];
+// Interfaces
+interface DashboardStats {
+    totalStudents: number;
+    totalExams: number;
+    totalRooms: number;
+    conflicts: number;
+}
+
+interface Schedule {
+    id: number;
+    dept: string;
+    semester: string;
+    status: string;
+    date: string;
+}
 
 export default function AdminDashboard() {
-    const totalStudents = "2,543";
-    const totalExams = 142;
-    const totalRooms = 45;
-    const conflicts = 3;
+    const [stats, setStats] = useState<DashboardStats>({
+        totalStudents: 0,
+        totalExams: 0,
+        totalRooms: 0,
+        conflicts: 0,
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                // Fetch counts concurrently
+                const [studentsRes, examsRes, roomsRes, conflictsRes] = await Promise.all([
+                    api.get('/etudiants'),
+                    api.get('/examens'),
+                    api.get('/lieu_examen'),
+                    api.get('/examens/conflicts')
+                ]);
+
+                // Assuming standard Laravel pagination or collection response
+                // If the API returns { data: [...], meta: { total: ... } } use meta.total
+                // If it returns array, use length. Only verify after first test if formats differ.
+
+                const getCount = (res: any) => res.data.meta?.total ?? res.data.length ?? res.data.total ?? 0;
+
+                setStats({
+                    totalStudents: getCount(studentsRes),
+                    totalExams: getCount(examsRes),
+                    totalRooms: getCount(roomsRes),
+                    conflicts: conflictsRes.data.length ?? 0 // Conflicts likely returns array of conflicts
+                });
+            } catch (error) {
+                console.error("Failed to fetch dashboard stats", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
+    const recentSchedules: Schedule[] = [
+        { id: 1, dept: 'Computer Science', semester: 'Spring 2024', status: 'Published', date: 'Oct 24, 2024' },
+        { id: 2, dept: 'Electrical Engineering', semester: 'Spring 2024', status: 'Draft', date: 'Oct 23, 2024' },
+        { id: 3, dept: 'Civil Engineering', semester: 'Fall 2023', status: 'Archived', date: 'Jun 15, 2023' },
+    ];
+
+    if (loading) {
+        return <div className="p-6 text-slate-500">Loading dashboard data...</div>;
+    }
 
     return (
         <div className="space-y-6">
@@ -25,7 +81,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Total Students</p>
-                        <p className="text-2xl font-bold text-slate-800">{totalStudents}</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.totalStudents}</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center">
@@ -34,7 +90,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Total Exams</p>
-                        <p className="text-2xl font-bold text-slate-800">{totalExams}</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.totalExams}</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center">
@@ -43,7 +99,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Total Rooms</p>
-                        <p className="text-2xl font-bold text-slate-800">{totalRooms}</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.totalRooms}</p>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center">
@@ -52,7 +108,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                         <p className="text-sm font-medium text-slate-500">Conflicts</p>
-                        <p className="text-2xl font-bold text-slate-800">{conflicts}</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.conflicts}</p>
                     </div>
                 </div>
             </div>

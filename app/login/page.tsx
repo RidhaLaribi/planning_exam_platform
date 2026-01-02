@@ -1,10 +1,11 @@
 'use client';
 
+import api from '@/lib/axios';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const router = useRouter();
+  const router = useRouter(); // Use useRouter from 'next/navigation' for App Router
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
@@ -16,24 +17,23 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
-    // Basic validation
     if (!email || !password) {
       setError('Please fill in all fields');
       setIsLoading(false);
       return;
     }
 
-    if (!email.includes('@')) {
-      setError('Please enter a valid email address');
-      setIsLoading(false);
-      return;
-    }
-
-    // Mock login delay
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      // In a real app, you would handle authentication here
-      console.log('Logging in with:', { email, role });
+      // Real API call
+      const response = await api.post('/login', {
+        email,
+        password,
+        role
+      });
+
+      // Handle success
+      console.log('Login successful:', response.data);
+      // You might want to store the token here, e.g., localStorage.setItem('token', response.data.access_token);
 
       // Role-based redirect
       switch (role) {
@@ -46,13 +46,24 @@ export default function LoginPage() {
         case 'department_head':
           router.push('/department');
           break;
+        case 'doyen':
+          router.push('/doyen');
+          break;
         case 'student':
-        default:
           router.push('/student');
           break;
+        default:
+          router.push('/');
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+    } catch (err: any) {
+      console.error('Login error:', err);
+      if (err.response && err.response.data && err.response.data.errors) {
+        setError(Object.values(err.response.data.errors).flat().join(' '));
+      } else if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Login failed. Please check your credentials and connection.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -61,8 +72,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-slate-100">
-        {/* Header */}
         <div className="bg-slate-900 p-8 text-center">
+          {/* Same SVG/Header content */}
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 mb-4">
             <svg
               className="w-6 h-6 text-white"
@@ -89,7 +100,6 @@ export default function LoginPage() {
           <p className="text-slate-400 text-sm">Sign in to access your dashboard</p>
         </div>
 
-        {/* Form */}
         <div className="p-8">
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
@@ -99,10 +109,7 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
                 Email Address
               </label>
               <input
@@ -117,10 +124,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
                 Password
               </label>
               <input
@@ -135,10 +139,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="role" className="block text-sm font-medium text-slate-700">
                 Role
               </label>
               <div className="relative">
@@ -151,6 +152,7 @@ export default function LoginPage() {
                   <option value="student">Student</option>
                   <option value="professor">Professor</option>
                   <option value="department_head">Department Head</option>
+                  <option value="doyen">Doyen</option>
                   <option value="admin">Admin</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
