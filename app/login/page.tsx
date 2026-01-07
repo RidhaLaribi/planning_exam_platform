@@ -33,7 +33,10 @@ export default function LoginPage() {
 
       // Handle success
       console.log('Login successful:', response.data);
-      // You might want to store the token here, e.g., localStorage.setItem('token', response.data.access_token);
+      if (response.data.access_token) {
+        localStorage.setItem('token', response.data.access_token);
+        localStorage.setItem('user_role', response.data.role); // Store role for easy access
+      }
 
       // Role-based redirect
       switch (role) {

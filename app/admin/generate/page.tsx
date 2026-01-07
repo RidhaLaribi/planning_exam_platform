@@ -1,78 +1,96 @@
 'use client';
 
 import { useState } from 'react';
+import api from '@/lib/axios';
+import { Play, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 export default function GenerateSchedulePage() {
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [success, setSuccess] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<any>(null);
 
     const handleGenerate = async () => {
-        setIsGenerating(true);
-        setSuccess(false);
+        if (!confirm('This will overwrite existing exams. Continue?')) return;
 
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        setLoading(true);
+        setResult(null);
 
-        setIsGenerating(false);
-        setSuccess(true);
+        try {
+            const response = await api.post('/schedule/generate');
+            setResult(response.data);
+        } catch (error: any) {
+            console.error('Generation failed:', error);
+            alert('Generation failed: ' + (error.response?.data?.message || error.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-slate-800">Generate Exam Schedule</h1>
+        <div className="p-8 max-w-4xl mx-auto">
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-slate-800 mb-2">Automatic Schedule Generator</h1>
+                <p className="text-slate-500">
+                    High-performance algorithm to generate conflict-free exam timetables.
+                </p>
+            </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8 max-w-2xl mx-auto text-center">
-                <div className="mb-6">
-                    <div className="mx-auto w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-4">
-                        <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-8">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-800">Status</h3>
+                        <p className="text-sm text-slate-500">
+                            {loading ? 'Running algorithm...' : result ? 'Complete' : 'Ready to start'}
+                        </p>
                     </div>
-                    <h2 className="text-xl font-semibold text-slate-800 mb-2">Ready to Generate Schedule?</h2>
-                    <p className="text-slate-500">
-                        This algorithm will approximate the best possible schedule considering room capacity, professor availability, and student formations.
-                    </p>
+                    <button
+                        onClick={handleGenerate}
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                    >
+                        {loading ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        ) : (
+                            <Play size={20} className="fill-current" />
+                        )}
+                        {loading ? 'Processing...' : 'Start Generation'}
+                    </button>
                 </div>
 
-                {success && (
-                    <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-lg border border-green-100 flex items-center justify-center">
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                        Schedule generated successfully!
+                {/* Results Metrics */}
+                {result && (
+                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-bottom-4 duration-500`}>
+                        <div className="bg-green-50 border border-green-100 p-6 rounded-xl flex flex-col items-center justify-center text-center">
+                            <CheckCircle className="h-10 w-10 text-green-600 mb-3" />
+                            <span className="text-3xl font-bold text-green-700">{result.scheduled}</span>
+                            <span className="text-sm text-green-600 font-medium">Exams Scheduled</span>
+                            <span className="text-xs text-green-500 mt-1">out of {result.total} modules</span>
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex flex-col items-center justify-center text-center">
+                            <Clock className="h-10 w-10 text-blue-600 mb-3" />
+                            <span className="text-3xl font-bold text-blue-700">{result.time}</span>
+                            <span className="text-sm text-blue-600 font-medium">Execution Time</span>
+                        </div>
+
+                        {result.scheduled < result.total && (
+                            <div className="bg-orange-50 border border-orange-100 p-6 rounded-xl flex flex-col items-center justify-center text-center">
+                                <AlertTriangle className="h-10 w-10 text-orange-600 mb-3" />
+                                <span className="text-3xl font-bold text-orange-700">{result.total - result.scheduled}</span>
+                                <span className="text-sm text-orange-600 font-medium">Unscheduled</span>
+                                <span className="text-xs text-orange-500 mt-1">Constraint violations</span>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                <button
-                    onClick={handleGenerate}
-                    disabled={isGenerating}
-                    className="w-full sm:w-auto px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center justify-center mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                    {isGenerating ? (
-                        <>
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </>
-                    ) : (
-                        'run Genetic Algorithm'
-                    )}
-                </button>
-            </div>
-
-            <div className="max-w-2xl mx-auto mt-8">
-                <h3 className="text-lg font-bold text-slate-800 mb-4">Configuration</h3>
-                <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Semester</span>
-                        <span className="font-medium text-slate-800">Spring 2024</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Exam Period</span>
-                        <span className="font-medium text-slate-800">May 15 - May 30</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-slate-600">Included Departments</span>
-                        <span className="font-medium text-slate-800">All</span>
-                    </div>
+                {/* Helper Text */}
+                <div className="mt-8 pt-8 border-t border-slate-100 text-sm text-slate-400">
+                    <p className="font-medium text-slate-500 mb-2">Algorithm details:</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li>Algorithm: Greedy Best-Fit with Degree+Size heuristics</li>
+                        <li>Constraints Enforced: 1 exam/day/student, Room Capacity, Professor Availability</li>
+                        <li>Optimization: In-memory conflict graph (O(1) lookups)</li>
+                    </ul>
                 </div>
             </div>
         </div>
