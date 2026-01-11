@@ -8,6 +8,27 @@ export default function GenerateSchedulePage() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
 
+    const pollStatus = async (jobId: string) => {
+        try {
+            const statusRes = await api.get(`/schedule/status/${jobId}`);
+            const data = statusRes.data;
+
+            if (data.status === 'completed') {
+                setResult(data.result);
+                setLoading(false);
+            } else if (data.status === 'failed') {
+                alert('Generation failed: ' + data.error);
+                setLoading(false);
+            } else {
+                // Still processing, poll again in 2s
+                setTimeout(() => pollStatus(jobId), 2000);
+            }
+        } catch (error) {
+            console.error('Polling failed:', error);
+            setTimeout(() => pollStatus(jobId), 2000);
+        }
+    };
+
     const handleGenerate = async () => {
         if (!confirm('This will overwrite existing exams. Continue?')) return;
 
@@ -15,12 +36,16 @@ export default function GenerateSchedulePage() {
         setResult(null);
 
         try {
+            // Start Job
             const response = await api.post('/schedule/generate');
-            setResult(response.data);
+            const jobId = response.data.jobId;
+
+            // Start Polling
+            pollStatus(jobId);
+
         } catch (error: any) {
             console.error('Generation failed:', error);
-            alert('Generation failed: ' + (error.response?.data?.message || error.message));
-        } finally {
+            alert('Start failed: ' + (error.response?.data?.message || error.message));
             setLoading(false);
         }
     };
@@ -39,7 +64,7 @@ export default function GenerateSchedulePage() {
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800">Status</h3>
                         <p className="text-sm text-slate-500">
-                            {loading ? 'Running algorithm...' : result ? 'Complete' : 'Ready to start'}
+                            {loading ? 'Processing queue...' : result ? 'Complete' : 'Ready to start'}
                         </p>
                     </div>
                     <button

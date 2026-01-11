@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '../../lib/axios';
+import api from '@/lib/axios';
 
 // Interfaces
 interface DashboardStats {
@@ -31,25 +31,15 @@ export default function AdminDashboard() {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Fetch counts concurrently
-                const [studentsRes, examsRes, roomsRes, conflictsRes] = await Promise.all([
-                    api.get('/etudiants'),
-                    api.get('/examens'),
-                    api.get('/lieu_examen'),
-                    api.get('/examens/conflicts')
-                ]);
-
-                // Assuming standard Laravel pagination or collection response
-                // If the API returns { data: [...], meta: { total: ... } } use meta.total
-                // If it returns array, use length. Only verify after first test if formats differ.
-
-                const getCount = (res: any) => res.data.meta?.total ?? res.data.length ?? res.data.total ?? 0;
+                // Fetch stats from optimized endpoint
+                const response = await api.get('/stats');
+                const data = response.data.data;
 
                 setStats({
-                    totalStudents: getCount(studentsRes),
-                    totalExams: getCount(examsRes),
-                    totalRooms: getCount(roomsRes),
-                    conflicts: conflictsRes.data.length ?? 0 // Conflicts likely returns array of conflicts
+                    totalStudents: data.totalStudents,
+                    totalExams: data.totalExams,
+                    totalRooms: data.totalRooms,
+                    conflicts: data.conflicts
                 });
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -119,7 +109,10 @@ export default function AdminDashboard() {
                     <h3 className="text-lg font-bold text-slate-800">Quick Actions</h3>
                     <p className="text-slate-500 text-sm">Manage your exam schedules efficiently.</p>
                 </div>
-                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center">
+                <button
+                    onClick={() => window.location.href = '/admin/generate'}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all flex items-center"
+                >
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
                     Generate Exam Schedule
                 </button>
