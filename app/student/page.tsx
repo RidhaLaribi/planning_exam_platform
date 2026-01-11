@@ -1,80 +1,73 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import api from '@/lib/axios';
+import { format, parseISO } from 'date-fns';
 
-// Denormalized single list
-const examsList = [
-    {
-        id: 1,
-        moduleName: 'CS101 - Intro to Programming',
-        profName: 'Dr. Sarah Smith',
-        roomName: 'Amphi A',
-        day: '15',
-        month: 'May',
-        weekday: 'Wed',
-        date: '2024-05-15', // For filtering
-        timeRange: '09:00 - 11:00',
-        status: 'Upcoming'
-    },
-    {
-        id: 2,
-        moduleName: 'CS102 - Web Basics',
-        profName: 'Prof. Johnson',
-        roomName: 'Lab 1',
-        day: '18',
-        month: 'May',
-        weekday: 'Sat',
-        date: '2024-05-18',
-        timeRange: '14:00 - 16:00',
-        status: 'Upcoming'
-    },
-    {
-        id: 3,
-        moduleName: 'MATH101 - Calculus I',
-        profName: 'Prof. Miller',
-        roomName: 'Amphi B',
-        day: '20',
-        month: 'May',
-        weekday: 'Mon',
-        date: '2024-05-20',
-        timeRange: '09:00 - 12:00',
-        status: 'Upcoming'
-    },
-    {
-        id: 4,
-        moduleName: 'PHYS101 - Mechanics',
-        profName: 'Prof. Johnson',
-        roomName: 'Room 101',
-        day: '22',
-        month: 'May',
-        weekday: 'Wed',
-        date: '2024-05-22',
-        timeRange: '14:00 - 16:00',
-        status: 'Upcoming'
-    },
-    {
-        id: 5,
-        moduleName: 'ENG101 - Technical English',
-        profName: 'Prof. Miller',
-        roomName: 'Room 102',
-        day: '25',
-        month: 'May',
-        weekday: 'Sat',
-        date: '2024-05-25',
-        timeRange: '10:00 - 11:30',
-        status: 'Upcoming'
-    }
-];
+interface Exam {
+    id: number;
+    moduleName: string;
+    profName: string;
+    roomName: string;
+    day: string;
+    month: string;
+    weekday: string;
+    date: string;
+    timeRange: string;
+    status: string;
+}
 
 export default function StudentPage() {
+    const [exams, setExams] = useState<Exam[]>([]);
+    const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState('');
 
-    const filteredExams = filterDate
-        ? examsList.filter(exam => exam.date === filterDate)
-        : examsList;
+    useEffect(() => {
+        const fetchExams = async () => {
+            try {
+                // Determine user ID if needed, or rely on hardcoded for demo if auth not fully set
+                // In a real app, the token handles identity. Here, let's assume the API handles it or we pass a mock ID.
+                // For this demo, let's try to pass a user_id via query param if we want to simulate specific user, 
+                // but the Controller has a fallback to the first student.
+                const response = await api.get('/exams/student');
 
-    // Mock countdown for the first exam
-    const nextExam = examsList[0];
+                const formattedExams = response.data.data.map((e: any) => {
+                    const dateObj = parseISO(e.date_heure);
+                    const endTime = new Date(dateObj.getTime() + (e.duree_minutes * 60000));
+
+                    return {
+                        id: e.id,
+                        moduleName: e.module.nom,
+                        profName: e.prof ? `Prof. ${e.prof.nom}` : 'TBD',
+                        roomName: e.salle.nom,
+                        day: format(dateObj, 'dd'),
+                        month: format(dateObj, 'MMM'),
+                        weekday: format(dateObj, 'EEE'),
+                        date: format(dateObj, 'yyyy-MM-dd'),
+                        timeRange: `${format(dateObj, 'HH:mm')} - ${format(endTime, 'HH:mm')}`,
+                        status: 'Upcoming' // Logic could be added to compare with now()
+                    };
+                });
+                setExams(formattedExams);
+            } catch (error) {
+                console.error("Failed to fetch exams", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExams();
+    }, []);
+
+    const filteredExams = filterDate
+        ? exams.filter(exam => exam.date === filterDate)
+        : exams;
+
+    const nextExam = exams.length > 0 ? exams[0] : null;
+
+    if (loading) {
+        return <div className="p-8 text-center text-slate-500">Loading schedule...</div>;
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -82,11 +75,11 @@ export default function StudentPage() {
             <header className="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
                 <div className="flex items-center space-x-3">
                     <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-                        JM
+                        ST
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-800">John Miller</h1>
-                        <p className="text-sm text-slate-500">Student - L1 Computer Science</p>
+                        <h1 className="text-xl font-bold text-slate-800">Student Portal</h1>
+                        <p className="text-sm text-slate-500">My Exam Schedule</p>
                     </div>
                 </div>
                 <button className="text-sm text-slate-600 hover:text-red-600 font-medium">Logout</button>
@@ -153,7 +146,7 @@ export default function StudentPage() {
                             ))
                         ) : (
                             <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 text-center">
-                                <p className="text-slate-500">No exams found for this date.</p>
+                                <p className="text-slate-500">No exams found for {filterDate || 'this period'}.</p>
                             </div>
                         )}
                     </div>
@@ -164,25 +157,12 @@ export default function StudentPage() {
                         <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
                             <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Next Exam</h3>
                             <p className="text-xl font-bold text-slate-800">{nextExam?.moduleName || 'None'}</p>
-                            <div className="mt-4 flex items-center justify-between">
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-blue-600">14</div>
-                                    <div className="text-xs text-slate-500 uppercase">Days</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-blue-600">08</div>
-                                    <div className="text-xs text-slate-500 uppercase">Hours</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-bold text-blue-600">30</div>
-                                    <div className="text-xs text-slate-500 uppercase">Mins</div>
-                                </div>
-                            </div>
+
                             <div className="mt-6 pt-6 border-t border-slate-100">
                                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">My Stats</h3>
                                 <div className="flex justify-between text-sm mb-2">
                                     <span className="text-slate-600">Total Exams</span>
-                                    <span className="font-medium text-slate-800">{examsList.length}</span>
+                                    <span className="font-medium text-slate-800">{exams.length}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-600">Conflict Check</span>
