@@ -12,25 +12,32 @@ import {
     Users
 } from 'lucide-react';
 
-interface Conflict {
+interface UnscheduledExam {
     id: number;
-    type: string;
-    severity: string; // 'low' | 'medium' | 'high' | 'critical'
-    description: string;
+    nom: string;
+    formation: { nom: string };
+    reason: string;
+    created_at: string;
 }
 
 interface Stat {
     total_exams: number;
-    total_conflicts: number;
+    total_unscheduled: number;
 }
 
 export default function ChefDepartmentDashboard() {
     const router = useRouter();
     const [stats, setStats] = useState<Stat | null>(null);
-    const [conflicts, setConflicts] = useState<Conflict[]>([]);
+    const [unscheduled, setUnscheduled] = useState<UnscheduledExam[]>([]);
     const [validationStatus, setValidationStatus] = useState('draft');
     const [isLoading, setIsLoading] = useState(true);
     const [isValidating, setIsValidating] = useState(false);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        router.push('/login');
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -40,7 +47,7 @@ export default function ChefDepartmentDashboard() {
         try {
             const response = await api.get('/chef-departement/dashboard');
             setStats(response.data.stats);
-            setConflicts(response.data.conflicts);
+            setUnscheduled(response.data.unscheduled);
             setValidationStatus(response.data.validation_status);
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
@@ -82,22 +89,25 @@ export default function ChefDepartmentDashboard() {
                     <h1 className="text-3xl font-bold text-slate-800">Department Dashboard</h1>
                     <p className="text-slate-500">Department-level schedule management</p>
                 </div>
-                <div>
-                    {validationStatus !== 'validated_chef' && validationStatus !== 'validated_doyen' ? (
-                        <button
-                            onClick={handleValidate}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
-                            disabled={isValidating}
-                        >
-                            <CheckCircle size={20} />
-                            {isValidating ? 'Validating...' : 'Validate Department Schedule'}
-                        </button>
-                    ) : (
-                        <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-200">
-                            <CheckCircle size={20} />
-                            Validated ({validationStatus.replace('validated_', '')})
-                        </div>
-                    )}
+                <div className="flex items-center gap-4">
+                    <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-red-600 font-medium">Logout</button>
+                    <div>
+                        {validationStatus !== 'validated_chef' && validationStatus !== 'validated_doyen' ? (
+                            <button
+                                onClick={handleValidate}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                disabled={isValidating}
+                            >
+                                <CheckCircle size={20} />
+                                {isValidating ? 'Validating...' : 'Validate Department Schedule'}
+                            </button>
+                        ) : (
+                            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-200">
+                                <CheckCircle size={20} />
+                                Validated ({validationStatus.replace('validated_', '')})
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -115,56 +125,49 @@ export default function ChefDepartmentDashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-slate-500 text-sm font-medium">Active Conflicts</h3>
+                        <h3 className="text-slate-500 text-sm font-medium">Unscheduled Exams</h3>
                         <div className="p-2 bg-red-50 rounded-lg text-red-600">
                             <AlertTriangle size={20} />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-slate-900">{stats?.total_conflicts || 0}</p>
+                    <p className="text-3xl font-bold text-slate-900">{stats?.total_unscheduled || 0}</p>
                 </div>
             </div>
 
-            {/* Conflicts Table */}
+            {/* Unscheduled Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
                 <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                    <h2 className="text-lg font-bold text-slate-800">Conflict Report</h2>
+                    <h2 className="text-lg font-bold text-slate-800">Unscheduled Exams Report</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3">Type</th>
-                                <th className="px-6 py-3">Severity</th>
-                                <th className="px-6 py-3">Description</th>
-                                <th className="px-6 py-3">Actions</th>
+                                <th className="px-6 py-3">Module</th>
+                                <th className="px-6 py-3">Formation</th>
+                                <th className="px-6 py-3">Reason</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {conflicts.length > 0 ? conflicts.map((conflict) => (
-                                <tr key={conflict.id} className="bg-white border-b hover:bg-slate-50">
+                            {unscheduled.length > 0 ? unscheduled.map((item) => (
+                                <tr key={item.id} className="bg-white border-b hover:bg-slate-50">
                                     <td className="px-6 py-4 font-medium text-slate-900">
-                                        {conflict.type.replace('_', ' ')}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                                    ${conflict.severity === 'critical' ? 'bg-red-100 text-red-800' :
-                                                conflict.severity === 'high' ? 'bg-orange-100 text-orange-800' :
-                                                    'bg-yellow-100 text-yellow-800'}
-                                `}>
-                                            {conflict.severity}
-                                        </span>
+                                        {item.nom}
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">
-                                        {conflict.description}
+                                        {item.formation?.nom || 'N/A'}
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <button className="text-blue-600 hover:text-blue-800 font-medium">Resolve</button>
+                                    <td className="px-6 py-4 text-slate-600">
+                                        <div className="flex items-center gap-2">
+                                            <AlertTriangle size={14} className="text-red-500" />
+                                            {item.reason}
+                                        </div>
                                     </td>
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-400">
-                                        No conflicts found directly in this department.
+                                    <td colSpan={3} className="px-6 py-8 text-center text-slate-400">
+                                        All exams in this department are scheduled.
                                     </td>
                                 </tr>
                             )}

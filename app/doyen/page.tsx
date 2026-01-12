@@ -16,10 +16,10 @@ import {
 interface KPI {
     total_exams: number;
     occupancy_rate: number;
-    total_conflicts: number;
+    total_unscheduled: number;
 }
 
-interface ConflictStat {
+interface UnscheduledStat {
     nom: string;
     count: number;
 }
@@ -27,10 +27,16 @@ interface ConflictStat {
 export default function DoyenDashboard() {
     const router = useRouter();
     const [kpis, setKpis] = useState<KPI | null>(null);
-    const [conflictsByDept, setConflictsByDept] = useState<ConflictStat[]>([]);
+    const [unscheduledByDept, setUnscheduledByDept] = useState<UnscheduledStat[]>([]);
     const [validationStatus, setValidationStatus] = useState('draft');
     const [isLoading, setIsLoading] = useState(true);
     const [isValidating, setIsValidating] = useState(false);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        router.push('/login');
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -40,7 +46,7 @@ export default function DoyenDashboard() {
         try {
             const response = await api.get('/doyen/dashboard');
             setKpis(response.data.kpis);
-            setConflictsByDept(response.data.conflicts_by_dept);
+            setUnscheduledByDept(response.data.unscheduled_by_dept);
             setValidationStatus(response.data.validation_status);
         } catch (error) {
             console.error('Failed to fetch dashboard data:', error);
@@ -95,15 +101,16 @@ export default function DoyenDashboard() {
                     <h1 className="text-3xl font-bold text-slate-800">Doyen Dashboard</h1>
                     <p className="text-slate-500">Global supervision and validation</p>
                 </div>
-                <div className="flex gap-4">
-                    <button
+                <div className="flex gap-4 items-center">
+                    <button onClick={handleLogout} className="text-sm text-slate-600 hover:text-red-600 font-medium mr-4">Logout</button>
+                    {/* <button
                         onClick={handleDetectConflicts}
                         className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
                         disabled={isValidating}
                     >
                         <Activity size={20} />
                         Run Conflict Check
-                    </button>
+                    </button> */}
 
                     {validationStatus !== 'validated_doyen' ? (
                         <button
@@ -153,12 +160,12 @@ export default function DoyenDashboard() {
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-slate-500 text-sm font-medium">Violations Detected</h3>
+                        <h3 className="text-slate-500 text-sm font-medium">Unscheduled Exams</h3>
                         <div className="p-2 bg-red-50 rounded-lg text-red-600">
                             <AlertTriangle size={20} />
                         </div>
                     </div>
-                    <p className="text-3xl font-bold text-slate-900">{kpis?.total_conflicts || 0}</p>
+                    <p className="text-3xl font-bold text-slate-900">{kpis?.total_unscheduled || 0}</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -175,15 +182,15 @@ export default function DoyenDashboard() {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Conflicts by Department */}
+                {/* Unscheduled by Department */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                    <h2 className="text-lg font-bold text-slate-800 mb-6">Conflicts by Department</h2>
+                    <h2 className="text-lg font-bold text-slate-800 mb-6">Unscheduled Exams by Department</h2>
                     <div className="space-y-4">
-                        {conflictsByDept.length > 0 ? conflictsByDept.map((dept, idx) => (
+                        {unscheduledByDept.length > 0 ? unscheduledByDept.map((dept, idx) => (
                             <div key={idx} className="space-y-1">
                                 <div className="flex justify-between text-sm">
                                     <span className="font-medium text-slate-700">{dept.nom}</span>
-                                    <span className="text-slate-500">{dept.count} conflicts</span>
+                                    <span className="text-slate-500">{dept.count} unscheduled</span>
                                 </div>
                                 <div className="w-full bg-slate-100 rounded-full h-2">
                                     <div
@@ -193,7 +200,7 @@ export default function DoyenDashboard() {
                                 </div>
                             </div>
                         )) : (
-                            <p className="text-slate-400 text-center py-8">No conflicts detected.</p>
+                            <p className="text-slate-400 text-center py-8">No unscheduled exams.</p>
                         )}
                     </div>
                 </div>

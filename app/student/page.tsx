@@ -1,5 +1,8 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
+
 import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
 import { format, parseISO } from 'date-fns';
@@ -21,6 +24,13 @@ export default function StudentPage() {
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState('');
+    const router = useRouter();
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        router.push('/login');
+    };
 
     useEffect(() => {
         const fetchExams = async () => {
@@ -82,7 +92,7 @@ export default function StudentPage() {
                         <p className="text-sm text-slate-500">My Exam Schedule</p>
                     </div>
                 </div>
-                <button className="text-sm text-slate-600 hover:text-red-600 font-medium">Logout</button>
+                <button className="text-sm text-slate-600 hover:text-red-600 font-medium" onClick={handleLogout} >Logout</button>
             </header>
 
             <main className="max-w-7xl mx-auto p-6 space-y-8">

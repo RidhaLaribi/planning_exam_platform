@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '../../../lib/axios';
 import EditRoomModal from '../../../components/EditRoomModal';
+import AddRoomModal from '../../../components/AddRoomModal';
 
 interface Room {
     id: number;
@@ -16,6 +17,7 @@ export default function RoomsPage() {
     const [rooms, setRooms] = useState<Room[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
     const fetchRooms = async () => {
@@ -44,26 +46,9 @@ export default function RoomsPage() {
         }
     };
 
-    const handleAdd = async () => {
-        const name = prompt("Enter room name (e.g., Salle 101):");
-        if (!name) return;
-        const capacity = prompt("Enter capacity (e.g., 50):");
-        if (!capacity) return;
-        const type = prompt("Enter type (Amphitheater, Classroom, Laboratory):", "Classroom");
-        if (!type) return;
-
-        try {
-            const res = await api.post('/lieu_examen', {
-                nom: name,
-                capacite: parseInt(capacity),
-                type: type,
-                batiment: 'Main Block' // Default for now
-            });
-            setRooms([...rooms, res.data]);
-        } catch (error) {
-            console.error("Failed to add room", error);
-            alert("Failed to add room");
-        }
+    const handleAddRoom = async (data: { nom: string; capacite: number; type: string; batiment: string }) => {
+        const res = await api.post('/lieu_examen', data);
+        setRooms([...rooms, res.data]);
     };
 
     const handleEdit = (room: Room) => {
@@ -82,7 +67,7 @@ export default function RoomsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Rooms</h1>
-                <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Room
                 </button>
@@ -124,6 +109,12 @@ export default function RoomsPage() {
                 onClose={() => setIsEditModalOpen(false)}
                 onSubmit={handleUpdateRoom}
                 room={selectedRoom}
+            />
+
+            <AddRoomModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSubmit={handleAddRoom}
             />
         </div>
     );

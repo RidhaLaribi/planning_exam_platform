@@ -85,9 +85,10 @@ export default function AddProfessorModal({ isOpen, onClose, onSubmit }: AddProf
         try {
             // First create user account
             const userRes = await api.post('/users', {
+                name: name.trim(),
                 email: email.trim(),
                 password: password,
-                role: 'professeur'
+                role: 'professor'
             });
 
             // Then create professor with user_id

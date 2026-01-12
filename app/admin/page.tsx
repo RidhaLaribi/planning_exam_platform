@@ -8,15 +8,22 @@ interface DashboardStats {
     totalStudents: number;
     totalExams: number;
     totalRooms: number;
-    conflicts: number;
+    totalUnscheduled: number;
 }
 
 interface Schedule {
-    id: number;
     dept: string;
-    semester: string;
+    semester?: string; // Optional/Mock for now
     status: string;
     date: string;
+}
+
+interface DashboardStats {
+    totalStudents: number;
+    totalExams: number;
+    totalRooms: number;
+    totalUnscheduled: number;
+    recentSchedules?: Schedule[];
 }
 
 export default function AdminDashboard() {
@@ -24,7 +31,8 @@ export default function AdminDashboard() {
         totalStudents: 0,
         totalExams: 0,
         totalRooms: 0,
-        conflicts: 0,
+        totalUnscheduled: 0,
+        recentSchedules: []
     });
     const [loading, setLoading] = useState(true);
 
@@ -39,7 +47,8 @@ export default function AdminDashboard() {
                     totalStudents: data.totalStudents,
                     totalExams: data.totalExams,
                     totalRooms: data.totalRooms,
-                    conflicts: data.conflicts
+                    totalUnscheduled: data.totalUnscheduled,
+                    recentSchedules: data.recentSchedules
                 });
             } catch (error) {
                 console.error("Failed to fetch dashboard stats", error);
@@ -51,11 +60,7 @@ export default function AdminDashboard() {
         fetchStats();
     }, []);
 
-    const recentSchedules: Schedule[] = [
-        { id: 1, dept: 'Computer Science', semester: 'Spring 2024', status: 'Published', date: 'Oct 24, 2024' },
-        { id: 2, dept: 'Electrical Engineering', semester: 'Spring 2024', status: 'Draft', date: 'Oct 23, 2024' },
-        { id: 3, dept: 'Civil Engineering', semester: 'Fall 2023', status: 'Archived', date: 'Jun 15, 2023' },
-    ];
+
 
     if (loading) {
         return <div className="p-6 text-slate-500">Loading dashboard data...</div>;
@@ -97,8 +102,8 @@ export default function AdminDashboard() {
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-slate-500">Conflicts</p>
-                        <p className="text-2xl font-bold text-slate-800">{stats.conflicts}</p>
+                        <p className="text-sm font-medium text-slate-500">Unscheduled Exams</p>
+                        <p className="text-2xl font-bold text-slate-800">{stats.totalUnscheduled}</p>
                     </div>
                 </div>
             </div>
@@ -135,26 +140,35 @@ export default function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {recentSchedules.map((schedule) => (
-                                <tr key={schedule.id} className="hover:bg-slate-50 transition-colors">
+                            {stats.recentSchedules?.length ? stats.recentSchedules.map((schedule, idx) => (
+                                <tr key={idx} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 text-slate-700 font-medium">{schedule.dept}</td>
-                                    <td className="px-6 py-4 text-slate-600">{schedule.semester}</td>
+                                    <td className="px-6 py-4 text-slate-600">{schedule.semester || 'S1 2024'}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${schedule.status === 'Published' ? 'bg-green-100 text-green-800' :
-                                            schedule.status === 'Draft' ? 'bg-yellow-100 text-yellow-800' :
-                                                'bg-gray-100 text-gray-800'
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${schedule.status === 'validated_doyen' ? 'bg-green-100 text-green-800' :
+                                            schedule.status === 'validated_chef' ? 'bg-blue-100 text-blue-800' :
+                                                schedule.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                    'bg-gray-100 text-gray-800'
                                             }`}>
-                                            {schedule.status}
+                                            {schedule.status === 'validated_doyen' ? 'Published' :
+                                                schedule.status === 'validated_chef' ? 'Pending Doyen' :
+                                                    schedule.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4 text-slate-500">{schedule.date}</td>
+                                    <td className="px-6 py-4 text-slate-500">{new Date(schedule.date).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 text-right">
                                         <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-                                            {schedule.status === 'Published' ? 'View' : schedule.status === 'Draft' ? 'Edit' : 'History'}
+                                            View
                                         </button>
                                     </td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                        No recent schedule activity found.
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
 import { format, parseISO } from 'date-fns';
+import { useRouter } from 'next/navigation';
+
 
 interface Exam {
     id: number;
@@ -17,6 +19,11 @@ interface Exam {
 export default function ProfessorPage() {
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
+
+    const handleLogout = () => {
+        router.push('/login');
+    };
 
     useEffect(() => {
         const fetchExams = async () => {
@@ -69,7 +76,7 @@ export default function ProfessorPage() {
                         <p className="text-sm text-slate-500">My Supervision Schedule</p>
                     </div>
                 </div>
-                <button className="text-sm text-slate-600 hover:text-red-600 font-medium">Logout</button>
+                <button className="text-sm text-slate-600 hover:text-red-600 font-medium" onClick={handleLogout}>Logout</button>
             </header>
 
             <main className="max-w-7xl mx-auto p-6 space-y-8">
