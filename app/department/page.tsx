@@ -76,7 +76,7 @@ export default function ChefDepartmentDashboard() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
         );
     }
@@ -95,16 +95,32 @@ export default function ChefDepartmentDashboard() {
                         {validationStatus !== 'validated_chef' && validationStatus !== 'validated_doyen' ? (
                             <button
                                 onClick={handleValidate}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
+                                className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm"
                                 disabled={isValidating}
                             >
                                 <CheckCircle size={20} />
                                 {isValidating ? 'Validating...' : 'Validate Department Schedule'}
                             </button>
                         ) : (
-                            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-200">
-                                <CheckCircle size={20} />
-                                Validated ({validationStatus.replace('validated_', '')})
+                            <div className="flex items-center gap-3">
+                                <div className="bg-green-100 text-green-800 px-4 py-2 rounded-lg flex items-center gap-2 border border-green-200">
+                                    <CheckCircle size={20} />
+                                    Validated ({validationStatus.replace('validated_', '')})
+                                </div>
+                                {validationStatus === 'validated_chef' && (
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm('Cancel validation? You will need to validate again.')) return;
+                                            try {
+                                                await api.post('/chef-departement/invalidate');
+                                                fetchDashboardData();
+                                            } catch (e) { alert('Failed to cancel validation'); }
+                                        }}
+                                        className="text-red-500 hover:text-red-700 text-sm font-medium underline"
+                                    >
+                                        Cancel Validation
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -116,7 +132,7 @@ export default function ChefDepartmentDashboard() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-slate-500 text-sm font-medium">Department Exams</h3>
-                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="p-2 bg-primary/10 rounded-lg text-primary">
                             <Calendar size={20} />
                         </div>
                     </div>

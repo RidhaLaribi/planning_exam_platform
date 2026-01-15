@@ -83,7 +83,7 @@ export default function GenerateSchedulePage() {
                         <button
                             onClick={handleStartClick}
                             disabled={loading}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                            className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg flex items-center gap-2 font-medium transition-all disabled:opacity-70 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                         >
                             <Play size={20} className="fill-current" />
                             Start Generation
@@ -109,9 +109,9 @@ export default function GenerateSchedulePage() {
                         </div>
 
                         <div className="bg-blue-50 border border-blue-100 p-6 rounded-xl flex flex-col items-center justify-center text-center">
-                            <Clock className="h-10 w-10 text-blue-600 mb-3" />
+                            <Clock className="h-10 w-10 text-primary mb-3" />
                             <span className="text-3xl font-bold text-blue-700">{result.time}</span>
-                            <span className="text-sm text-blue-600 font-medium">Execution Time</span>
+                            <span className="text-sm text-primary font-medium">Execution Time</span>
                         </div>
 
                         {result.scheduled < result.total && (
@@ -183,7 +183,7 @@ export default function GenerateSchedulePage() {
                             </button>
                             <button
                                 onClick={handleConfirmGenerate}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-md transition-all flex items-center gap-2"
+                                className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium shadow-md transition-all flex items-center gap-2"
                             >
                                 <Play size={16} className="fill-current" />
                                 Generate

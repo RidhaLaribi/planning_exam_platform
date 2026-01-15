@@ -30,6 +30,11 @@ const menuItems = [
         )
     },
     {
+        name: 'Exams', href: '/admin/exams', icon: (
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+        )
+    },
+    {
         name: 'Rooms', href: '/admin/rooms', icon: (
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
         )
@@ -50,8 +55,8 @@ export default function Sidebar({ email = 'admin@university.edu' }: { email?: st
     const pathname = usePathname();
 
     return (
-        <aside className="fixed inset-y-0 left-0 bg-slate-900 w-64 text-white transition-transform duration-300 transform -translate-x-full md:translate-x-0 z-30">
-            <div className="flex items-center justify-center h-16 border-b border-slate-800">
+        <aside className="fixed inset-y-0 left-0 bg-primary w-64 text-white transition-transform duration-300 transform -translate-x-full md:translate-x-0 z-30 shadow-soft">
+            <div className="flex items-center justify-center h-16 border-b border-white/10">
                 <span className="text-xl font-bold tracking-wide">ExamPortal Admin</span>
             </div>
             <nav className="flex flex-col flex-1 p-4 space-y-1">
@@ -61,9 +66,9 @@ export default function Sidebar({ email = 'admin@university.edu' }: { email?: st
                         <Link
                             key={item.name}
                             href={item.href}
-                            className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-150 ${isActive
-                                ? 'bg-blue-600 text-white'
-                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                            className={`flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-150 ${isActive
+                                ? 'bg-white/20 text-white shadow-lg'
+                                : 'text-white/80 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             {item.icon}
@@ -72,12 +77,12 @@ export default function Sidebar({ email = 'admin@university.edu' }: { email?: st
                     );
                 })}
             </nav>
-            <div className="p-4 border-t border-slate-800">
+            <div className="p-4 border-t border-white/10">
                 <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-slate-500 mr-3"></div>
+                    <div className="w-8 h-8 rounded-full bg-white/20 mr-3"></div>
                     <div>
                         <p className="text-sm font-medium text-white">System Admin</p>
-                        <p className="text-xs text-slate-400">{email}</p>
+                        <p className="text-xs text-white/60">{email}</p>
                     </div>
                 </div>
             </div>

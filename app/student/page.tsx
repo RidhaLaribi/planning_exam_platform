@@ -84,7 +84,7 @@ export default function StudentPage() {
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
                 <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
                         ST
                     </div>
                     <div>
@@ -105,14 +105,14 @@ export default function StudentPage() {
                     <div className="flex items-center space-x-4 w-full sm:w-auto">
                         <input
                             type="date"
-                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
+                            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none w-full sm:w-auto"
                             value={filterDate}
                             onChange={(e) => setFilterDate(e.target.value)}
                         />
                         {filterDate && (
                             <button
                                 onClick={() => setFilterDate('')}
-                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                className="text-sm text-primary hover:text-primary-hover font-medium"
                             >
                                 Clear
                             </button>
@@ -127,9 +127,9 @@ export default function StudentPage() {
                         {filteredExams.length > 0 ? (
                             filteredExams.map((exam) => (
                                 <div key={exam.id} className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex flex-col sm:flex-row hover:shadow-md transition-shadow">
-                                    <div className="bg-blue-50 md:w-32 flex flex-col items-center justify-center p-4 border-r border-slate-100">
-                                        <span className="text-blue-600 font-bold text-lg">{exam.day}</span>
-                                        <span className="text-blue-500 text-sm font-medium uppercase">{exam.month}</span>
+                                    <div className="bg-primary/5 md:w-32 flex flex-col items-center justify-center p-4 border-r border-slate-100">
+                                        <span className="text-primary font-bold text-lg">{exam.day}</span>
+                                        <span className="text-primary/80 text-sm font-medium uppercase">{exam.month}</span>
                                         <span className="text-xs text-slate-400 mt-1">{exam.weekday}</span>
                                     </div>
                                     <div className="p-6 flex-1 flex flex-col justify-center">

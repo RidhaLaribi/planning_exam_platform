@@ -77,7 +77,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg overflow-hidden border border-slate-100">
         <div className="bg-slate-900 p-8 text-center">
           {/* Same SVG/Header content */}
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary mb-4">
             <svg
               className="w-6 h-6 text-white"
               fill="none"
@@ -173,7 +173,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+              className="w-full bg-primary hover:bg-primary-hover text-white font-medium py-2.5 rounded-xl transition-all shadow-md focus:ring-4 focus:ring-primary/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isLoading ? (
                 <>

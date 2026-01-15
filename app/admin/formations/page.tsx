@@ -49,7 +49,7 @@ export default function FormationsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Formations</h1>
-                <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button onClick={handleAdd} className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Formation
                 </button>
@@ -59,7 +59,7 @@ export default function FormationsPage() {
                 {formations.map((formation) => (
                     <div key={formation.id} className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
-                            <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-700">
+                            <span className="px-2 py-1 rounded text-xs font-semibold bg-primary/10 text-primary">
                                 {formation.nom.includes('Master') ? 'M' : 'L'}
                             </span>
                             <button className="text-slate-400 hover:text-slate-600">

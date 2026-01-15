@@ -18,7 +18,7 @@ export default function StatisticsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        api.get('/stats')
+        api.get('/dashboard-stats')
             .then(res => setData(res.data.data))
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
@@ -42,7 +42,7 @@ export default function StatisticsPage() {
                         <span className="text-sm text-slate-400 ml-2 mb-1">capacity usage</span>
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 mt-4">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min(data.occupancyRate, 100)}%` }}></div>
+                        <div className="bg-primary h-2 rounded-full" style={{ width: `${Math.min(data.occupancyRate, 100)}%` }}></div>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
@@ -73,9 +73,9 @@ export default function StatisticsPage() {
                     <h3 className="text-lg font-bold text-slate-800 mb-6">Exams per Department</h3>
                     <div className="flex-1 flex items-end justify-between space-x-2 px-4">
                         {data.examsByDept.map((dept, i) => (
-                            <div key={i} className="w-full bg-blue-100 rounded-t-lg relative group flex flex-col justify-end h-full">
+                            <div key={i} className="w-full bg-primary/20 rounded-t-lg relative group flex flex-col justify-end h-full">
                                 <div
-                                    className="bg-blue-500 rounded-t-lg transition-all duration-500 w-full"
+                                    className="bg-primary rounded-t-lg transition-all duration-500 w-full"
                                     style={{ height: `${(dept.count / maxExams) * 100}%` }}
                                 ></div>
                                 <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">

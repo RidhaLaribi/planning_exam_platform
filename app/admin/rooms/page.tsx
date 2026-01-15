@@ -67,7 +67,7 @@ export default function RoomsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Rooms</h1>
-                <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Room
                 </button>
@@ -79,7 +79,7 @@ export default function RoomsPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div className={`p-3 rounded-lg ${room.type?.toLowerCase().includes('amphi') ? 'bg-orange-50 text-orange-600' :
                                 room.type?.toLowerCase().includes('lab') ? 'bg-purple-50 text-purple-600' :
-                                    'bg-blue-50 text-blue-600'
+                                    'bg-blue-50 text-primary'
                                 }`}>
                                 {room.type?.toLowerCase().includes('amphi') ? (
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>

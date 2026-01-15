@@ -66,7 +66,7 @@ export default function ProfessorsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Professors</h1>
-                <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Professor
                 </button>
@@ -88,7 +88,7 @@ export default function ProfessorsPage() {
                             {professors.map((prof) => (
                                 <tr key={prof.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 flex items-center">
-                                        <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs mr-3">
+                                        <div className="h-8 w-8 rounded-full bg-blue-100 text-primary flex items-center justify-center font-bold text-xs mr-3">
                                             {prof.nom.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                                         </div>
                                         <span className="text-slate-800 font-medium">{prof.nom}</span>
@@ -97,7 +97,7 @@ export default function ProfessorsPage() {
                                     <td className="px-6 py-4 text-slate-600">{prof.departement?.nom || 'N/A'}</td>
                                     <td className="px-6 py-4 text-slate-600">{prof.specialite}</td>
                                     <td className="px-6 py-4 text-right space-x-2">
-                                        {/* <button onClick={() => handleViewProfile(prof.id)} className="text-blue-600 hover:text-blue-800 text-sm font-medium">View Profile</button> */}
+                                        {/* <button onClick={() => handleViewProfile(prof.id)} className="text-primary hover:text-blue-800 text-sm font-medium">View Profile</button> */}
                                         <button onClick={() => handleDelete(prof.id)} className="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
                                     </td>
                                 </tr>

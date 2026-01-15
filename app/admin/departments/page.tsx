@@ -16,6 +16,7 @@ interface Department {
 export default function DepartmentsPage() {
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
@@ -24,8 +25,10 @@ export default function DepartmentsPage() {
         try {
             const res = await api.get('/departements');
             setDepartments(res.data);
+            setError(null);
         } catch (error) {
             console.error("Failed to fetch departments", error);
+            setError("Failed to load departments. Please check your connection or server status.");
         } finally {
             setLoading(false);
         }
@@ -67,11 +70,19 @@ export default function DepartmentsPage() {
 
     if (loading) return <div className="p-6 text-slate-500">Loading...</div>;
 
+    if (error) return (
+        <div className="p-6 text-red-600 bg-red-50 rounded-lg border border-red-200 m-6">
+            <h3 className="font-bold">Error</h3>
+            <p>{error}</p>
+            <button onClick={fetchDepartments} className="mt-2 text-sm underline hover:text-red-800">Retry</button>
+        </div>
+    );
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-slate-800">Departments</h1>
-                <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                <button onClick={handleAdd} className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors flex items-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     Add Department
                 </button>
@@ -101,7 +112,7 @@ export default function DepartmentsPage() {
                                         {dept.formations_count || 0} formations
                                     </td>
                                     <td className="px-6 py-4 text-right space-x-2">
-                                        <button onClick={() => handleEdit(dept)} className="text-slate-400 hover:text-blue-600 transition-colors">
+                                        <button onClick={() => handleEdit(dept)} className="text-slate-400 hover:text-primary transition-colors">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                         </button>
                                         <button onClick={() => handleDelete(dept.id)} className="text-slate-400 hover:text-red-600 transition-colors">
