@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ,
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -9,7 +9,7 @@ const api = axios.create({
     withCredentials: true, // For Sanctum cookie-based auth if needed later
 });
 
-console.log('API Base URL:', process.env.NEXT_PUBLIC_API_BASE_URL);
+console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL);
 
 api.interceptors.request.use((config) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
