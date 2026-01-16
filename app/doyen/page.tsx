@@ -232,6 +232,6 @@ export default function DoyenDashboard() {
                 </button>
             </div>
         </div>
-        </div >
+
     );
 }
